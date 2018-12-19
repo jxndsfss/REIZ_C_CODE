@@ -1,8 +1,8 @@
 /*
     @file     reiz_string.c
     @author   jxndsfss
-    @version  v1.0.0
-    @date     2018-12-06
+    @version  v1.0.1
+    @date     2018-12-20
     @site     ShangYouSong.SZ
     @brief    字符串相关函数实现源文件
 */
@@ -28,7 +28,7 @@ void deleteCharInStr_rz(char *pDes, char c){
 
     while (*pDes != '\0') {
         if (*pDes != c) {
-            *pStore++ = *pDes；
+            *pStore++ = *pDes;
         }
         pDes++;
     }
@@ -69,8 +69,11 @@ void deleteSomeCharInStr_rz(char *pDes, char *pSearch){
     @return void
 */
 void strToUpper_rz(char *pStr){
-    while (*pStr != '\0' && *pStr >= 'a' && *pStr <= 'z') {
-        *pStr++ -= 'a' - 'A';
+    while (*pStr != '\0') {
+        if (*pStr >= 'a' && *pStr <= 'z') {
+            *pStr -= 'a' - 'A';
+        }
+        pStr++;
     }
 }
 
@@ -80,10 +83,11 @@ void strToUpper_rz(char *pStr){
     @return void
 */
 void strToLower_rz(char *pStr){
-    int i = 0;
-
-    while (*pStr != '\0' && *pStr >= 'A' && *pStr <= 'Z') {
-        *pStr++ += 'a' - 'A';
+    while (*pStr != '\0') {
+        if (*pStr >= 'A' && *pStr <= 'Z') {
+            *pStr += 'a' - 'A';
+        }
+        pStr++;
     }
 }
 

@@ -1,8 +1,8 @@
 /*
     @file     reiz_string.h
     @author   jxndsfss
-    @version  v1.0.0
-    @date     2018-12-06
+    @version  v1.0.1
+    @date     2018-12-20
     @site     ShangYouSong.SZ
     @brief    字符串相关函数实现头文件
 */
