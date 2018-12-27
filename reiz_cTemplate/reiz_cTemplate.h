@@ -1,11 +1,13 @@
 /*
-    @file     .h
-    @author   jxndsfss
-    @version  v1.0.1
-    @date     2018-12-25
-    @site     ShangYouSong.SZ
-    @brief    头文件
-*/
+ *******************************************************************************
+ *  @file       .h
+ *  @author     jxndsfss
+ *  @version    v1.0.2
+ *  @date       2018-12-27
+ *  @site       ShangYouSong.SZ
+ *  @brief      头文件
+ *******************************************************************************
+ */
 
 /*----- define to prevent recursive inclusion --------------------------------*/
 #ifndef _H
