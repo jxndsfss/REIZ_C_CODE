@@ -1,13 +1,12 @@
-﻿/*
- *******************************************************************************
+﻿/*******************************************************************************
  *  @file       reiz_ringQueue.h
  *  @author     jxndsfss
- *  @version    v1.0.1
- *  @date       2019-01-05
+ *  @version    v1.0.2
+ *  @date       2019-01-06
  *  @site       ShangYouSong.SZ
  *  @brief      环形队列缓存头文件
  *******************************************************************************
- *
+ * 
  *  使用方法：
  *  
  *  //定义缓存数组大小
@@ -24,11 +23,11 @@
  *  //往环形队列中存储一字节数据
  *  ringQueue_PutByte(pUartRingQ, 0x12);
  *  ...
- *
+ * 
  *******************************************************************************
  */
 
-/*----- define to prevent recursive inclusion --------------------------------*/
+/* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef REIZ_RING_QUEUE_H
 #define REIZ_RING_QUEUE_H
 
@@ -36,12 +35,12 @@
 extern "C" {
 #endif
 
-/*----- includes -------------------------------------------------------------*/
+/* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
 
-/*----- exported define ------------------------------------------------------*/
+/* Exported define -----------------------------------------------------------*/
 
 /* 宏值：1为打开，0为关闭 */
 #define OVERFLOW_TIMES_COUNT_ENABLE         1                                   //溢出次数统计功能
@@ -49,7 +48,7 @@ extern "C" {
 #define MAX_COUNT_ONCE_STORED_ENABLE        1                                   //统计缓存之前存储过的最大字节数
 #define GET_PUT_PEEK_RETURN_COUNT_ENABLE    1                                   //存取函数是否返回缓存当前存储字节数
 
-/*----- exported types -------------------------------------------------------*/
+/* Exported types ------------------------------------------------------------*/
 typedef struct {
     uint8_t     *pBuffer;                                                       //实际数据存储数组地址
     int32_t     length;                                                         //实际数据存储数组长度
@@ -67,10 +66,10 @@ typedef struct {
 #endif
 } ringQueue_t, *pRingQueue_t;
 
-/*----- exported macro -------------------------------------------------------*/
-/*----- exported variables ---------------------------------------------------*/
+/* Exported macro ------------------------------------------------------------*/
+/* Exported variables --------------------------------------------------------*/
 
-/*----- exported functions prototypes ----------------------------------------*/
+/* Exported functions prototypes ---------------------------------------------*/
 
 extern void ringQueue_Construct(pRingQueue_t pRingQ, uint8_t *bufferArray, int32_t arraySize);  //创建环形队列缓存并进行初始化
 extern void ringQueue_Flush(pRingQueue_t pRingQ);                                               //清空环形队列缓存
@@ -99,11 +98,11 @@ extern void ringQueue_PeekP(pRingQueue_t pRingQ, uint8_t *pDst);                
 extern bool ringQueue_IsOverflow(pRingQueue_t pRingQ);                                          //查看环形队列缓存是否发生溢出
 extern int32_t ringQueue_GetOverflowTimes(pRingQueue_t pRingQ);                                 //读取环形队列缓存溢出次数
 #endif      
-        
+
 #if OVERFLOW_LOST_BYTES_COUNT_ENABLE    
 extern int32_t ringQueue_GetLostBytesNum(pRingQueue_t pRingQ);                                  //读取溢出导致的丢失数据总字节数
 #endif      
-        
+
 #if MAX_COUNT_ENABLE    
 extern int32_t ringQueue_GetMaxCount(pRingQueue_t pRingQ);                                      //读取环形队列缓存之前存储内容最大字节数量
 #endif
