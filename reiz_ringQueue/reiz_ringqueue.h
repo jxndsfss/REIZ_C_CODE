@@ -2,8 +2,8 @@
  *******************************************************************************
  *  @file       reiz_ringQueue.h
  *  @author     jxndsfss
- *  @version    v1.0.0
- *  @date       2019-01-03
+ *  @version    v1.0.1
+ *  @date       2019-01-05
  *  @site       ShangYouSong.SZ
  *  @brief      环形队列缓存头文件
  *******************************************************************************
@@ -43,25 +43,27 @@ extern "C" {
 
 /*----- exported define ------------------------------------------------------*/
 
-#define OVERFLOW_TIMES_COUNT_ENABLE         1                                   //使能溢出次数统计功能
-#define OVERFLOW_LOST_BYTES_COUNT_ENABLE    1                                   //使能溢出字节数统计功能
-#define MAX_COUNT_ENABLE                    1                                   //使能统计存储过最大字节数据功能
+/* 宏值：1为打开，0为关闭 */
+#define OVERFLOW_TIMES_COUNT_ENABLE         1                                   //溢出次数统计功能
+#define OVERFLOW_LOST_BYTES_COUNT_ENABLE    1                                   //溢出字节数统计功能
+#define MAX_COUNT_ONCE_STORED_ENABLE        1                                   //统计缓存之前存储过的最大字节数
+#define GET_PUT_PEEK_RETURN_COUNT_ENABLE    1                                   //存取函数是否返回缓存当前存储字节数
 
 /*----- exported types -------------------------------------------------------*/
 typedef struct {
     uint8_t     *pBuffer;                                                       //实际数据存储数组地址
-    uint32_t    length;                                                         //实际数据存储数组长度
-    uint32_t    count;                                                          //当前环形存储区存储字节数
-    uint32_t    head;                                                           //头索引，数据插入
-    uint32_t    tail;                                                           //尾索引，数据取出
-#if MAX_COUNT_ENABLE
-    uint32_t    maxCount;                                                       //环形存储区内存储过的最大字节数
+    int32_t     length;                                                         //实际数据存储数组长度
+    int32_t     count;                                                          //当前环形存储区存储字节数
+    int32_t     head;                                                           //头索引，数据插入
+    int32_t     tail;                                                           //尾索引，数据取出
+#if MAX_COUNT_ONCE_STORED_ENABLE
+    int32_t     maxCount;                                                       //环形存储区内存储过的最大字节数
 #endif
 #if OVERFLOW_TIMES_COUNT_ENABLE
-    uint32_t    overflowTimes;                                                  //溢出次数
+    int32_t     overflowTimes;                                                  //溢出次数
 #endif
 #if OVERFLOW_LOST_BYTES_COUNT_ENABLE
-    uint32_t    LostBytesNum;                                                   //溢出后丢失的数据字节数量
+    int32_t     LostBytesNum;                                                   //溢出后丢失的数据字节数量
 #endif
 } ringQueue_t, *pRingQueue_t;
 
@@ -70,29 +72,40 @@ typedef struct {
 
 /*----- exported functions prototypes ----------------------------------------*/
 
-extern void ringQueue_Construct(pRingQueue_t pRingQ, uint8_t *bufferArray, size_t arraySize);    //创建环形队列缓存并进行初始化
-extern int32_t ringQueue_GetByte(pRingQueue_t pRingQ, uint8_t *pDst);                            //从环状队列缓存读取1个字节
-extern int32_t ringQueue_GetMult(pRingQueue_t pRingQ, uint8_t *pDst, uint32_t num);              //从环形队列缓存读取多个字节
-extern uint32_t ringQueue_GetCount(pRingQueue_t pRingQ);                                         //获取环形队列缓存当前存储字节数
-extern bool ringQueue_IsFull(pRingQueue_t pRingQ);                                               //查看环形队列缓存是否已满
-extern bool ringQueue_IsEmpty(pRingQueue_t pRingQ);                                              //查看环形队列缓存是否为空
-extern uint32_t ringQueue_Peek(pRingQueue_t pRingQ, uint8_t *pDst);                              //查看环形队列缓存尾端1字节内容，但不取出该字节
-extern int32_t ringQueue_PutByte(pRingQueue_t pRingQ, uint8_t data);                             //将1字节存入环形队列缓存
-extern int32_t ringQueue_PutMult(pRingQueue_t pRingQ, uint8_t *pSrc, uint32_t num);              //将多个字节存入环形队列缓存
-extern void ringQueue_Flush(pRingQueue_t pRingQ);                                                //清空环形队列缓存
-extern uint32_t ringQueue_GetFree(pRingQueue_t pRingQ);                                          //获取环形队列缓存空余容量字节数
-    
+extern void ringQueue_Construct(pRingQueue_t pRingQ, uint8_t *bufferArray, int32_t arraySize);  //创建环形队列缓存并进行初始化
+extern void ringQueue_Flush(pRingQueue_t pRingQ);                                               //清空环形队列缓存
+extern bool ringQueue_IsFull(pRingQueue_t pRingQ);                                              //查看环形队列缓存是否已满
+extern bool ringQueue_IsEmpty(pRingQueue_t pRingQ);                                             //查看环形队列缓存是否为空
+extern uint8_t ringQueue_GetByte(pRingQueue_t pRingQ);                                          //从环状队列缓存读取1个字节
+extern uint8_t ringQueue_Peek(pRingQueue_t pRingQ);                                             //查看环形队列缓存尾端1字节内容，但不取出该字节
+extern uint32_t ringQueue_GetFree(pRingQueue_t pRingQ);                                         //获取环形队列缓存空余容量字节数
+extern uint32_t ringQueue_GetCount(pRingQueue_t pRingQ);                                        //获取环形队列缓存当前存储字节数
+
+#if GET_PUT_PEEK_RETURN_COUNT_ENABLE
+extern int32_t ringQueue_GetByteP(pRingQueue_t pRingQ, uint8_t *pDst);                          //从环状队列缓存读取1个字节
+extern int32_t ringQueue_GetMult(pRingQueue_t pRingQ, uint8_t *pDst, int32_t num);              //从环形队列缓存读取多个字节
+extern int32_t ringQueue_PutByte(pRingQueue_t pRingQ, uint8_t data);                            //将1字节存入环形队列缓存
+extern int32_t ringQueue_PutMult(pRingQueue_t pRingQ, uint8_t *pSrc, int32_t num);              //将多个字节存入环形队列缓存
+extern int32_t ringQueue_PeekP(pRingQueue_t pRingQ, uint8_t *pDst);                             //查看环形队列缓存尾端1字节内容，但不取出该字节
+#else
+extern void ringQueue_GetByteP(pRingQueue_t pRingQ, uint8_t *pDst);                             //从环状队列缓存读取1个字节
+extern void ringQueue_GetMult(pRingQueue_t pRingQ, uint8_t *pDst, int32_t num);                 //从环形队列缓存读取多个字节
+extern void ringQueue_PutByte(pRingQueue_t pRingQ, uint8_t data);                               //将1字节存入环形队列缓存
+extern void ringQueue_PutMult(pRingQueue_t pRingQ, uint8_t *pSrc, int32_t num);                 //将多个字节存入环形队列缓存
+extern void ringQueue_PeekP(pRingQueue_t pRingQ, uint8_t *pDst);                                //查看环形队列缓存尾端1字节内容，但不取出该字节
+#endif
+
 #if OVERFLOW_TIMES_COUNT_ENABLE 
-extern bool ringQueue_IsOverflow(pRingQueue_t pRingQ);                                           //查看环形队列缓存是否发生溢出
-extern uint32_t ringQueue_GetOverflowTimes(pRingQueue_t pRingQ);                                 //读取环形队列缓存溢出次数
-#endif  
-    
+extern bool ringQueue_IsOverflow(pRingQueue_t pRingQ);                                          //查看环形队列缓存是否发生溢出
+extern uint32_t ringQueue_GetOverflowTimes(pRingQueue_t pRingQ);                                //读取环形队列缓存溢出次数
+#endif      
+        
 #if OVERFLOW_LOST_BYTES_COUNT_ENABLE    
-extern uint32_t ringQueue_GetLostBytesNum(pRingQueue_t pRingQ);                                  //读取溢出导致的丢失数据总字节数
-#endif  
-    
+extern uint32_t ringQueue_GetLostBytesNum(pRingQueue_t pRingQ);                                 //读取溢出导致的丢失数据总字节数
+#endif      
+        
 #if MAX_COUNT_ENABLE    
-extern uint32_t ringQueue_GetMaxCount(pRingQueue_t pRingQ);                                      //读取环形队列缓存之前存储内容最大字节数量
+extern uint32_t ringQueue_GetMaxCount(pRingQueue_t pRingQ);                                     //读取环形队列缓存之前存储内容最大字节数量
 #endif
 
 #ifdef __cplusplus
