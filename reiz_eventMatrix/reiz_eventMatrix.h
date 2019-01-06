@@ -121,4 +121,4 @@ extern bool eventMatrix_RegistEventHandleCB(pEcb_t pEcb, int eventFlag, pEventCB
  */
 
 /******************************** END OF FILE **********************************
-*************************** (C) Copyright 2018 REIZ ***************************/
+*************************** (C) Copyright 2019 REIZ ***************************/
