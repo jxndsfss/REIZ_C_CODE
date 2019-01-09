@@ -141,7 +141,6 @@ extern bool eventMatrix_RegistEventHandleCB(pEcb_t pEcb, int eventFlag, pEventCB
     if (pEcb != NULL) {
         row = eventFlag / MATRIX_COL;
         col = eventFlag % MATRIX_COL;
-
         pEcb->cbMatrix[row][col] = pCb;
         return true;
     }
