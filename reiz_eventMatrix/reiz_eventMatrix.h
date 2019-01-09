@@ -1,8 +1,8 @@
 /*******************************************************************************
  *  @file       reiz_eventMatrix.h
  *  @author     jxndsfss
- *  @version    v1.0.1
- *  @date       2019-01-06
+ *  @version    v1.0.2
+ *  @date       2019-01-09
  *  @site       ShangYouSong.SZ
  *  @brief      事件矩阵实现头文件
  *******************************************************************************
@@ -34,6 +34,9 @@ extern "C"
 /* 事件标志矩阵一维数组元素类型 */
 #define FLAG_MATRIX_ROW_TYPE        uint32_t
 
+/* 事件矩阵列数 */
+#define MATRIX_COL                  (sizeof( FLAG_MATRIX_ROW_TYPE ) * 8)
+
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported types ------------------------------------------------------------*/
@@ -42,8 +45,8 @@ typedef void *pPara_t;                                                          
 
 typedef struct eventControlBlock_ {
     FLAG_MATRIX_ROW_TYPE    flagMatrix[ MATRIX_ROW ];                                           //事件标志矩阵
-    pEventCB_t              CbMatrix  [ MATRIX_ROW ][ sizeof(FLAG_MATRIX_ROW_TYPE) * 8 ];       //事件处理回调函数指针矩阵
-    pPara_t                 paraMatrix[ MATRIX_ROW ][ sizeof(FLAG_MATRIX_ROW_TYPE) * 8 ];       //事件参数集合数据结构指针矩阵
+    pEventCB_t              cbMatrix  [ MATRIX_ROW ][ MATRIX_COL ];                             //事件处理回调函数指针矩阵
+    pPara_t                 paraMatrix[ MATRIX_ROW ][ MATRIX_COL ];                             //事件参数集合数据结构指针矩阵
 } ecb_t, *pEcb_t;
 
 /* Exported variables --------------------------------------------------------*/
