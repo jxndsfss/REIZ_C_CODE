@@ -288,7 +288,7 @@ extern void ringQueue_Flush(pRingQueue_t pRingQ) {
 /*******************************************************************************
  *  @brief  获取环形队列缓存空余容量字节数
  *  @param  pRingQ - 环形队列缓存指针
- *  @return int - 空余字节数
+ *  @return int    - 空余字节数
  */
 extern uint32_t ringQueue_GetFree(pRingQueue_t pRingQ) {
     return pRingQ->length - pRingQ->count;
@@ -307,7 +307,7 @@ extern bool ringQueue_IsOverflow(pRingQueue_t pRingQ) {
 
 /*******************************************************************************
  *  @brief  读取环形队列缓存溢出次数
- *  @param  pRingQ - 环形队列缓存指针
+ *  @param  pRingQ        - 环形队列缓存指针
  *  @return overflowTimes - 溢出次数
  */
 extern int32_t ringQueue_GetOverflowTimes(pRingQueue_t pRingQ) {
