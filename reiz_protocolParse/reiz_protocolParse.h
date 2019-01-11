@@ -66,11 +66,11 @@ typedef struct cmdTypeElement_ {                                                
 } cmdTypeElement_t;
 
 typedef cmdTypeElement_t (*pCmdTypeEleArr_t)[];                                 //协议命令类型字符串指针数组指针类型定义（一维数组指针）
-typedef FLAG_MATRIX_ROW_TYPE (*pFlagMatrix_t)[];                                //协议指令收到标志矩阵数组指针类型定义（一维数组指针）
-typedef pCmdCB_t cbMatrixRowArray_t[MATRIX_COL];                                //协议指令回调函数指针矩阵行元素数组类型定义（大小为sizeof(FLAG_MATRIX_ROW_TYPE)*8的函数指针数组）
-typedef cbMatrixRowArray_t (*pCbMatrix_t)[];                                    //协议指令回调函数指针矩阵数组指针类型定义（二维数组指针）
-typedef pPara_t paraMatrixRowArray_t[MATRIX_COL];                               //协议指令参数指针矩阵行元素数组类型定义（大小为sizeof(FLAG_MATRIX_ROW_TYPE)*8的指针数组）
-typedef paraMatrixRowArray_t (*pParaMatrix_t)[];                                //协议指令参数指针矩阵数组指针类型定义（二维数组指针）
+typedef FLAG_MATRIX_ROW_TYPE (*pFlagMatrix_t)[];                                //协议命令收到标志矩阵数组指针类型定义（一维数组指针）
+typedef pCmdCB_t cbMatrixRowArray_t[MATRIX_COL];                                //协议命令回调函数指针矩阵行元素数组类型定义（大小为sizeof(FLAG_MATRIX_ROW_TYPE)*8的函数指针数组）
+typedef cbMatrixRowArray_t (*pCbMatrix_t)[];                                    //协议命令回调函数指针矩阵数组指针类型定义（二维数组指针）
+typedef pPara_t paraMatrixRowArray_t[MATRIX_COL];                               //协议命令参数指针矩阵行元素数组类型定义（大小为sizeof(FLAG_MATRIX_ROW_TYPE)*8的指针数组）
+typedef paraMatrixRowArray_t (*pParaMatrix_t)[];                                //协议命令参数指针矩阵数组指针类型定义（二维数组指针）
 
 typedef struct cmdParseControlBlock_ {                                          //协议命令解析控制块数据类型定义
     int                     matrixRow;                                          //协议命令类型矩阵行数
