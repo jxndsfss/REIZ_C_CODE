@@ -1,11 +1,26 @@
 /*******************************************************************************
  *  @file       reiz_protocolParseUseCase.c
  *  @author     jxndsfss
- *  @version    v1.0.0
- *  @date       2019-01-10
+ *  @version    v1.0.1
+ *  @date       2019-01-11
  *  @site       ShangYouSong.SZ
  *  @brief      字符串协议解析模块使用例程
  *******************************************************************************
+ *  使用方法：
+ *  1.根据MCU位数修改 reiz_protocolParse.h 中的宏 FLAG_MATRIX_ROW_TYPE，使其为unsigned int类型
+ *      例：#define FLAG_MATRIX_ROW_TYPE          uint32_t
+ *  2.根据命令类型数量 n 修改宏值 MATRIX_ROW，使 MATRIX_ROW * MATRIX_COL >= n
+ *      例：#define MATRIX_ROW                    1
+ *  3.完善命令类型宏，宏值从1开始递增
+ *      例：#define CMD_TYPE_GET_BATTERY_LEVEL    1
+ *  4.建立和完善命令类型元素数组 cmdTypeElement_t，保证最后一行为{0, 0}
+ *      例：static cmdTypeElement_t cmdTypeEleArr[] = {}
+ *  5.定义 cpcb_t 命令解析控制块变量和 PROTOCOL_PARSE_OJB(MATRIX_ROW) 协议对象变量
+ *      例：static cpcb_t cmdParseCtrBlk;                     
+ *      例：static PROTOCOL_PARSE_OJB(MATRIX_ROW) protocolObj;
+ *  6.注册各命令回调函数 registerCmdCB();
+ *  7.初始化命令解析控制块 cpcbInit();
+ *  8.APP中执行命令解析和命令处理
  */
 
 /* Includes ------------------------------------------------------------------*/
@@ -32,25 +47,40 @@
 
 /* Private variables ---------------------------------------------------------*/
 
+static cpcb_t cmdParseCtrBlk;                                                   //定义协议解析控制块变量
+static PROTOCOL_PARSE_OJB(MATRIX_ROW) protocolObj;                              //定义协议对象变量
+
 //定义命令类型及命令类型字符串
 static cmdTypeElement_t cmdTypeEleArr[] = {
     { CMD_TYPE_GET_BATTERY_LEVEL    ,   "GetBatteryLevel"   },
     { CMD_TYPE_GET_SIGNAL_STRENGTH  ,   "GetSignalStrength" },
     { CMD_TYPE_SET_DEVICE_NAME      ,   "SetDeviceName"     },
     { CMD_TYPE_GET_TEMPERATURE      ,   "GetTemperature"    },
-    { 0                             ,   0                   }
+    { 0                             ,   0                   }                   //此行必须有，作为数组结束行！
 };
-
-static cpcb_t cmdParseCtrBlk;
-static FLAG_MATRIX_ROW_TYPE flagArr[MATRIX_ROW];
-static cbMatrixRowArray_t cbArr[MATRIX_ROW];
-static paraMatrixRowArray_t paraArr[MATRIX_ROW];
 
 /* Exported variables --------------------------------------------------------*/
 
 extern pCpcb_t pCpcb = &cmdParseCtrBlk;
 
 /* Private function prototypes -----------------------------------------------*/
+static void registerAllCmdCB(void);
+static void GetBatteryLevel_ProcesCB(void *pPara);
+static void GetSignalStrength_ProcesCB(void *pPara);
+static void SetDeviceName_ProcesCB(void *pPara);
+static void GetTemperature_ProcesCB(void *pPara);
+
+/*******************************************************************************
+*  @brief  注册协议命令回调函数
+*  @param  void
+*  @return void
+*/
+static void registerAllCmdCB(void) {
+    registerCmdCB(pCpcb, CMD_TYPE_GET_BATTERY_LEVEL, GetBatteryLevel_ProcesCB);
+    registerCmdCB(pCpcb, CMD_TYPE_GET_SIGNAL_STRENGTH, GetSignalStrength_ProcesCB);
+    registerCmdCB(pCpcb, CMD_TYPE_SET_DEVICE_NAME, SetDeviceName_ProcesCB);
+    registerCmdCB(pCpcb, CMD_TYPE_GET_TEMPERATURE, GetTemperature_ProcesCB);
+}
 
 /*******************************************************************************
  *  @brief  获取电量回调函数
@@ -101,29 +131,17 @@ static void GetTemperature_ProcesCB(void *pPara) {
 }
 
 /*******************************************************************************
- *  @brief  注册协议命令回调函数
- *  @param  void
- *  @return void
- */
-static void registerAllCmdCB(void) {
-    registerCmdCB(pCpcb, CMD_TYPE_GET_BATTERY_LEVEL, GetBatteryLevel_ProcesCB);
-    registerCmdCB(pCpcb, CMD_TYPE_GET_SIGNAL_STRENGTH, GetSignalStrength_ProcesCB);
-    registerCmdCB(pCpcb, CMD_TYPE_SET_DEVICE_NAME, SetDeviceName_ProcesCB);
-    registerCmdCB(pCpcb, CMD_TYPE_GET_TEMPERATURE, GetTemperature_ProcesCB);
-}
-
-/*******************************************************************************
-*  @brief   命令解析控制块初始化
+*  @brief   命令解析初始化
 *  @param   void
 *  @return  void
 */
-extern void cpcbInit(void) {
-    cmdParseControlBlockInit(   pCpcb, 
-                                MATRIX_ROW, 
-                                (pFlagMatrix_t)flagArr,
-                                (pCmdTypeEleArr_t)cmdTypeEleArr,
-                                (pCbMatrix_t)cbArr,
-                                (pParaMatrix_t)paraArr);
+extern void protocolParseInit(void) {
+    cpcbInit(   pCpcb,
+                MATRIX_ROW, 
+                (pCmdTypeEleArr_t)cmdTypeEleArr,
+                (pFlagMatrix_t)protocolObj.flagMatrix,
+                (pCbMatrix_t)protocolObj.cbMatrix,
+                (pParaMatrix_t)protocolObj.paraMatrix);
     registerAllCmdCB();
 }
 
@@ -133,11 +151,9 @@ extern void cpcbInit(void) {
  *  @return void
  */
 extern void protocolParseTest(void) {
-    int cmdType;
-    char *pPara;
 
-    //命令解析控制块初始化
-    cpcbInit();
+    //命令解析初始化
+    protocolParseInit();
 
     //测试命令字符串
     char *pTestStr1 = "CMD GetBatteryLevel\r\n";
@@ -146,24 +162,16 @@ extern void protocolParseTest(void) {
     char *pTestStr4 = "CMD GetTemperature\r\n";
 
     //解析命令类型
-    cmdType = cmdTypeParse(pCpcb, pTestStr1);
-    setCmdFlag(pCpcb, cmdType, NULL);
+    cmdTypeParse(pCpcb, pTestStr1);
 
     //解析命令类型
-    cmdType = cmdTypeParse(pCpcb, pTestStr2);
-    setCmdFlag(pCpcb, cmdType, NULL);
+    cmdTypeParse(pCpcb, pTestStr2);
 
     //解析命令类型，传递参数
-    cmdType = cmdTypeParse(pCpcb, pTestStr3);
-    pPara = malloc(strlen(pTestStr3) + 1);
-    if (pPara) {
-        memcpy(pPara, pTestStr3, strlen(pTestStr3) + 1);
-    }
-    setCmdFlag(pCpcb, cmdType, pPara);
+    cmdTypeParse(pCpcb, pTestStr3);
 
     //解析命令类型
-    cmdType = cmdTypeParse(pCpcb, pTestStr4);
-    setCmdFlag(pCpcb, cmdType, NULL);
+    cmdTypeParse(pCpcb, pTestStr4);
 
     //命令处理
     cmdProcess(pCpcb);
