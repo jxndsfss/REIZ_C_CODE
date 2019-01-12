@@ -168,7 +168,7 @@ extern void strCmdParseTest(void) {
     //解析命令类型
     strCmdParse_cmdTypeParse(pCpcb, pTestStr2);
 
-    //解析命令类型，传递参数
+    //解析命令类型
     strCmdParse_cmdTypeParse(pCpcb, pTestStr3);
 
     //解析命令类型
