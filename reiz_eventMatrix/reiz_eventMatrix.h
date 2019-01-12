@@ -1,8 +1,8 @@
 /*******************************************************************************
  *  @file       reiz_eventMatrix.h
  *  @author     jxndsfss
- *  @version    v1.0.2
- *  @date       2019-01-09
+ *  @version    v1.0.3
+ *  @date       2019-01-12
  *  @site       ShangYouSong.SZ
  *  @brief      事件矩阵实现头文件
  *******************************************************************************
@@ -24,40 +24,58 @@ extern "C"
 
 /* Exported define -----------------------------------------------------------*/
 
-/* 
- * 事件矩阵行数，所能表示总事件数为 MATRIX_ROW * sizeof(FLAG_MATRIX_ROW_TYPE) * 8，
- * 事件矩阵用于事件较多的场合，举例若 FLAG_MATRIX_ROW_TYPE 为 uint32_t，
- * 则事件总数为MATRIX_ROW * 32，若MATRIX_ROW为2，则事件总数为64
- */
-#define MATRIX_ROW                  1
-
 /* 事件标志矩阵一维数组元素类型 */
-#define FLAG_MATRIX_ROW_TYPE        uint32_t
+#define EVENT_FLAG_MATRIX_ROW_TYPE      uint32_t
 
 /* 事件矩阵列数 */
-#define MATRIX_COL                  (sizeof( FLAG_MATRIX_ROW_TYPE ) * 8)
+#define EVENT_MATRIX_COL                (sizeof( EVENT_FLAG_MATRIX_ROW_TYPE ) * 8)
 
 /* Exported macro ------------------------------------------------------------*/
 
-/* Exported types ------------------------------------------------------------*/
-typedef void (*pEventCB_t)(void *pPara);                                                        //事件处理回调函数指针类型定义
-typedef void *pPara_t;                                                                          //事件处理函数参数构造数据类型指针
+/*
+    事件矩阵块宏类型定义
+    使用方法：
+    #define EVENT_MATRIX_ROW  2
+    EVENT_PROCESS_OBJ(EVENT_MATRIX_ROW) xxxEvObj;
+*/
+#define EVENT_PROCESS_OBJ(row)                                  \
+struct {                                                        \
+    EVENT_FLAG_MATRIX_ROW_TYPE          evFlagMatrix[row];      \
+    evCbMatrixRowArr_t                  evCbMatrix[row];        \
+    evParaMatrixRowArr_t                evParaMatrix[row];      \
+}
 
-typedef struct eventControlBlock_ {
-    FLAG_MATRIX_ROW_TYPE    flagMatrix[ MATRIX_ROW ];                                           //事件标志矩阵
-    pEventCB_t              cbMatrix  [ MATRIX_ROW ][ MATRIX_COL ];                             //事件处理回调函数指针矩阵
-    pPara_t                 paraMatrix[ MATRIX_ROW ][ MATRIX_COL ];                             //事件参数集合数据结构指针矩阵
+/* Exported types ------------------------------------------------------------*/
+typedef EVENT_FLAG_MATRIX_ROW_TYPE (*pEvFlagMatrix_t)[];                        //事件标志矩阵指针类型定义
+typedef void (*pEventCB_t)(void *pPara);                                        //事件处理回调函数指针类型定义
+typedef pEventCB_t evCbMatrixRowArr_t[EVENT_MATRIX_COL];                        //事件回调函数矩阵行元素类型定义
+typedef evCbMatrixRowArr_t (*pEvCbMatrix_t)[];                                  //事件回调函数矩阵指针类型定义
+typedef void *evParaMatrixRowArr_t[EVENT_MATRIX_COL];                           //事件回调函数参数矩阵行元素类型定义
+typedef evParaMatrixRowArr_t (*pEvParaMatrix_t)[];                              //事件参数矩阵指针类型定义
+
+typedef struct eventControlBlock_ {                                             //事件控制块类型定义
+    int                 matrixRow;
+    pEvFlagMatrix_t     pEvFlagMatrix;                                          //事件标志矩阵指针
+    pEvCbMatrix_t       pEvCbMatrix;                                            //事件处理回调函数矩阵指针
+    pEvParaMatrix_t     pEvParaMatrix;                                          //事件参数矩阵指针
 } ecb_t, *pEcb_t;
 
 /* Exported variables --------------------------------------------------------*/
 
 /* Exported functions prototypes ---------------------------------------------*/
-extern void eventMatrix_EventProcess(pEcb_t pEcb);                                              //事件处理函数，轮询事件矩阵
-extern bool eventMatrix_SetEventFlag(pEcb_t pEcb, int eventFlag);                               //设置事件标志
-extern bool eventMatrix_GetEventFlag(pEcb_t pEcb, int eventFlag);                               //读取事件标志
-extern bool eventMatrix_ClearEventFlag(pEcb_t pEcb, int eventFlag);                             //清除事件标志
-extern bool eventMatrix_SaveEventPara(pEcb_t pEcb, int eventFlag, pPara_t pPara);               //保存事件参数集合数据结构指针，以供事件处理回调函数使用
-extern bool eventMatrix_RegistEventHandleCB(pEcb_t pEcb, int eventFlag, pEventCB_t pCb);        //注册事件处理回调函数
+
+extern bool eventMatrix_ecbInit(    pEcb_t              pEcb,                   //事件控制块初始化
+                                    int                 matrixRow,
+                                    pEvFlagMatrix_t     pEvFlagMatrix,
+                                    pEvCbMatrix_t       pEvCbMatrix,
+                                    pEvParaMatrix_t     pEvParaMatrix);
+
+extern void eventMatrix_EventProcess(pEcb_t pEcb);                              //事件处理函数，轮询事件矩阵
+extern bool eventMatrix_SetEventFlag(pEcb_t pEcb, int eventFlag);               //设置事件标志
+extern bool eventMatrix_GetEventFlag(pEcb_t pEcb, int eventFlag);               //读取事件标志
+extern bool eventMatrix_ClearEventFlag(pEcb_t pEcb, int eventFlag);             //清除事件标志
+extern bool eventMatrix_SaveEventPara(pEcb_t pEcb, int eventFlag, void *pPara); //保存事件参数集合数据结构指针，以供事件处理回调函数使用
+extern bool eventMatrix_RegistEvCB(pEcb_t pEcb, int eventFlag, pEventCB_t pCb); //注册事件处理回调函数
 
 #ifdef __cplusplus
 }
