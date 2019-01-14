@@ -1,29 +1,10 @@
 ﻿/*******************************************************************************
  *  @file       reiz_ringQueue.h
  *  @author     jxndsfss
- *  @version    v1.0.2
- *  @date       2019-01-06
+ *  @version    v1.0.3
+ *  @date       2019-01-14
  *  @site       ShangYouSong.SZ
  *  @brief      环形队列缓存头文件
- *******************************************************************************
- * 
- *  使用方法：
- *  
- *  //定义缓存数组大小
- *  #define BUFFER_SIZE 512
- *  
- *  //创建缓存数组、环形缓队列、环形队列指针，初始化环形队列指针
- *  uint8_t uartBuffer[BUFFER_SIZE] = {0};
- *  ringQueue_t uartRingQ;
- *  pRingQueue_t pUartRingQ = &uartRingQ;
- *  
- *  //构建环形队列，进行初始化
- *  ringQueue_Construct(pUartRingQ, uartBuffer, BUFFER_SIZE);
- *  
- *  //往环形队列中存储一字节数据
- *  ringQueue_PutByte(pUartRingQ, 0x12);
- *  ...
- * 
  *******************************************************************************
  */
 
@@ -49,9 +30,9 @@ extern "C" {
 #define GET_PUT_PEEK_RETURN_COUNT_ENABLE    1                                   //存取函数是否返回缓存当前存储字节数
 
 /* Exported types ------------------------------------------------------------*/
-typedef struct {
+typedef struct ringQueueControlBlock_ {
     uint8_t     *pBuffer;                                                       //实际数据存储数组地址
-    int32_t     length;                                                         //实际数据存储数组长度
+    int32_t     size;                                                           //实际数据存储数组长度
     int32_t     count;                                                          //当前环形存储区存储字节数
     int32_t     head;                                                           //头索引，数据插入
     int32_t     tail;                                                           //尾索引，数据取出
@@ -67,11 +48,20 @@ typedef struct {
 } ringQueue_t, *pRingQueue_t;
 
 /* Exported macro ------------------------------------------------------------*/
+
+/*
+    环形队列缓存对象宏类型定义
+*/
+#define RING_QUEUE_OBJ(bufferSize)      struct {                                \
+                                            ringQueue_t ringQ;                  \
+                                            uint8_t buffer[bufferSize];         \
+                                        }
+
 /* Exported variables --------------------------------------------------------*/
 
 /* Exported functions prototypes ---------------------------------------------*/
 
-extern void ringQueue_Construct(pRingQueue_t pRingQ, uint8_t *bufferArray, int32_t arraySize);  //创建环形队列缓存并进行初始化
+extern bool ringQueue_Init(pRingQueue_t pRingQ, uint8_t *pBufferArray, int32_t arraySize);      //创建环形队列缓存并进行初始化
 extern void ringQueue_Flush(pRingQueue_t pRingQ);                                               //清空环形队列缓存
 extern bool ringQueue_IsFull(pRingQueue_t pRingQ);                                              //查看环形队列缓存是否已满
 extern bool ringQueue_IsEmpty(pRingQueue_t pRingQ);                                             //查看环形队列缓存是否为空

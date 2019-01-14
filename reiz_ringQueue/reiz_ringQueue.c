@@ -1,8 +1,8 @@
 /*******************************************************************************
  *  @file       reiz_ringQueue.c
  *  @author     jxndsfss
- *  @version    v1.0.2
- *  @date       2019-01-06
+ *  @version    v1.0.3
+ *  @date       2019-01-14
  *  @site       ShangYouSong.SZ
  *  @brief      环形队列缓存源文件
  *******************************************************************************
@@ -19,15 +19,20 @@
 /* Private function prototypes -----------------------------------------------*/
 
 /*******************************************************************************
- *  @brief  创建环形队列缓存并进行初始化
- *  @param  pRingQ      - 环形队列指针
+ *  @brief  环形队列缓存并进行初始化
+ *  @param  pRingQ      - 环形队列控制块指针
  *          bufferArray - 存储数据的数组指针
  *          arraySize   - 存储数据的数组大小
- *  @return void
+ *  @return true        - 成功
+ *          false       - 失败
  */
-extern void ringQueue_Construct(pRingQueue_t pRingQ, uint8_t *bufferArray, int32_t arraySize) {
-    pRingQ->pBuffer         =   bufferArray;
-    pRingQ->length          =   arraySize;
+extern bool ringQueue_Init(pRingQueue_t pRingQ, uint8_t *pBufferArray, int32_t arraySize) {
+    if (pRingQ == NULL || pBufferArray == NULL || arraySize == 0) {
+        return false;
+    }
+
+    pRingQ->pBuffer         =   pBufferArray;
+    pRingQ->size            =   arraySize;
     pRingQ->count           =   0;
     pRingQ->head            =   0;
     pRingQ->tail            =   0;
@@ -40,6 +45,8 @@ extern void ringQueue_Construct(pRingQueue_t pRingQ, uint8_t *bufferArray, int32
 #if OVERFLOW_LOST_BYTES_COUNT_ENABLE
     pRingQ->LostBytesNum    =   0;
 #endif
+
+    return true;
 }
 
 /*******************************************************************************
@@ -57,8 +64,8 @@ extern int32_t ringQueue_GetByteP(pRingQueue_t pRingQ, uint8_t *pDst) {
 extern void ringQueue_GetByteP(pRingQueue_t pRingQ, uint8_t *pDst) {
 #endif
     if (pRingQ->count > 0) {
-        *pDst = pRingQ->pBuffer[pRingQ->tail];
-        pRingQ->tail = (pRingQ->tail + 1) % pRingQ->length;
+        pRingQ->head = (pRingQ->head + 1) % pRingQ->size;
+        *pDst = pRingQ->pBuffer[pRingQ->head];
         pRingQ->count--;
     
 #if GET_PUT_PEEK_RETURN_COUNT_ENABLE
@@ -90,8 +97,8 @@ extern void ringQueue_GetMult(pRingQueue_t pRingQ, uint8_t *pDst, int32_t num) {
 #endif
     if(num <= pRingQ->count){
         while(num){
-            *pDst++ = pRingQ->pBuffer[pRingQ->tail];
-            pRingQ->tail = (pRingQ->tail + 1) % pRingQ->length;
+            pRingQ->head = (pRingQ->head + 1) % pRingQ->size;
+            *pDst++ = pRingQ->pBuffer[pRingQ->head];
             pRingQ->count--;
             num--;
         }
@@ -123,7 +130,7 @@ extern uint32_t ringQueue_GetCount(pRingQueue_t pRingQ) {
  *          false  - 未满
  */
 extern bool ringQueue_IsFull(pRingQueue_t pRingQ) {
-    return pRingQ->count == pRingQ->length;
+    return pRingQ->count == pRingQ->size;
 }
 
 /*******************************************************************************
@@ -146,11 +153,10 @@ extern uint8_t ringQueue_GetByte(pRingQueue_t pRingQ) {
     uint8_t retData = 0;
     
     if (pRingQ->count > 0) {
-        retData = pRingQ->pBuffer[pRingQ->tail];
-        pRingQ->tail = (pRingQ->tail + 1) % pRingQ->length;
+        pRingQ->head = (pRingQ->head + 1) % pRingQ->size;
+        retData = pRingQ->pBuffer[pRingQ->head];
         pRingQ->count--;
     }
-    
     return retData;
 }
 
@@ -205,9 +211,9 @@ extern int32_t ringQueue_PutByte(pRingQueue_t pRingQ, uint8_t data) {
 #else
 extern void ringQueue_PutByte(pRingQueue_t pRingQ, uint8_t data) {
 #endif
-    if (pRingQ->count < pRingQ->length) {
-        pRingQ->pBuffer[pRingQ->head] = data;
-        pRingQ->head = (pRingQ->head + 1) % pRingQ->length;
+    if (pRingQ->count < pRingQ->size) {
+        pRingQ->tail = (pRingQ->tail + 1) % pRingQ->size;
+        pRingQ->pBuffer[pRingQ->tail] = data;
         pRingQ->count++;
 #if MAX_COUNT_ONCE_STORED_ENABLE
         pRingQ->maxCount = (pRingQ->count > pRingQ->maxCount) ?
@@ -247,9 +253,9 @@ extern int32_t ringQueue_PutMult(pRingQueue_t pRingQ, uint8_t *pSrc, int32_t num
 extern void ringQueue_PutMult(pRingQueue_t pRingQ, uint8_t *pSrc, int32_t num) {
 #endif
     while(num){
-        if (pRingQ->count < pRingQ->length) {
-            pRingQ->pBuffer[pRingQ->head] = *pSrc++;
-            pRingQ->head = (pRingQ->head + 1) % pRingQ->length;
+        if (pRingQ->count < pRingQ->size) {
+            pRingQ->tail = (pRingQ->tail + 1) % pRingQ->size;
+            pRingQ->pBuffer[pRingQ->tail] = *pSrc++;
             pRingQ->count++;
 #if MAX_COUNT_ONCE_STORED_ENABLE
             pRingQ->maxCount = (pRingQ->count > pRingQ->maxCount) ?
@@ -291,7 +297,7 @@ extern void ringQueue_Flush(pRingQueue_t pRingQ) {
  *  @return int    - 空余字节数
  */
 extern uint32_t ringQueue_GetFree(pRingQueue_t pRingQ) {
-    return pRingQ->length - pRingQ->count;
+    return pRingQ->size - pRingQ->count;
 }
 
 #if OVERFLOW_TIMES_COUNT_ENABLE
