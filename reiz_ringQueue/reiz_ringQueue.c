@@ -1,8 +1,8 @@
 /*******************************************************************************
  *  @file       reiz_ringQueue.c
  *  @author     jxndsfss
- *  @version    v1.0.3
- *  @date       2019-01-14
+ *  @version    v1.0.4
+ *  @date       2019-03-29
  *  @site       ShangYouSong.SZ
  *  @brief      环形队列缓存源文件
  *******************************************************************************
@@ -30,7 +30,7 @@ extern bool ringQueue_Init(pRingQueue_t pRingQ, uint8_t *pBufferArray, int32_t a
     if (pRingQ == NULL || pBufferArray == NULL || arraySize == 0) {
         return false;
     }
-
+    
     pRingQ->pBuffer         =   pBufferArray;
     pRingQ->size            =   arraySize;
     pRingQ->count           =   0;
@@ -42,10 +42,7 @@ extern bool ringQueue_Init(pRingQueue_t pRingQ, uint8_t *pBufferArray, int32_t a
 #if OVERFLOW_TIMES_COUNT_ENABLE
     pRingQ->overflowTimes   =   0;
 #endif
-#if OVERFLOW_LOST_BYTES_COUNT_ENABLE
-    pRingQ->LostBytesNum    =   0;
-#endif
-
+    
     return true;
 }
 
@@ -67,12 +64,12 @@ extern void ringQueue_GetByteP(pRingQueue_t pRingQ, uint8_t *pDst) {
         pRingQ->head = (pRingQ->head + 1) % pRingQ->size;
         *pDst = pRingQ->pBuffer[pRingQ->head];
         pRingQ->count--;
-    
+        
 #if GET_PUT_PEEK_RETURN_COUNT_ENABLE
         return pRingQ->count;
 #else
         return;
-#endif        
+#endif
     }
     
 #if GET_PUT_PEEK_RETURN_COUNT_ENABLE
@@ -96,12 +93,12 @@ extern int32_t ringQueue_GetMult(pRingQueue_t pRingQ, uint8_t *pDst, int32_t num
 extern void ringQueue_GetMult(pRingQueue_t pRingQ, uint8_t *pDst, int32_t num) {
 #endif
     if(num <= pRingQ->count){
-        while(num){
+        while(num--){
             pRingQ->head = (pRingQ->head + 1) % pRingQ->size;
             *pDst++ = pRingQ->pBuffer[pRingQ->head];
             pRingQ->count--;
-            num--;
         }
+        
 #if GET_PUT_PEEK_RETURN_COUNT_ENABLE
         return pRingQ->count;
 #else
@@ -198,11 +195,10 @@ extern void ringQueue_PeekP(pRingQueue_t pRingQ, uint8_t *pDst) {
 }
 
 /*******************************************************************************
- *  @brief  将1字节存入环形队列缓存(溢出时不存储新接收的数据)
+ *  @brief  将1字节存入环形队列缓存(溢出时循环覆盖之前的数据)
  *  @param  pRingQ - 环形队列缓存指针
  *          data   - 存入的数据
- *  @return -1     - 溢出
- *          count  - 环形队列缓存当前存储字节数
+ *  @return count  - 环形队列缓存当前存储字节数
  *          -----------------------------------
  *          void
  */
@@ -211,39 +207,33 @@ extern int32_t ringQueue_PutByte(pRingQueue_t pRingQ, uint8_t data) {
 #else
 extern void ringQueue_PutByte(pRingQueue_t pRingQ, uint8_t data) {
 #endif
+    pRingQ->tail = (pRingQ->tail + 1) % pRingQ->size;
+    pRingQ->pBuffer[pRingQ->tail] = data;
+    
     if (pRingQ->count < pRingQ->size) {
-        pRingQ->tail = (pRingQ->tail + 1) % pRingQ->size;
-        pRingQ->pBuffer[pRingQ->tail] = data;
         pRingQ->count++;
 #if MAX_COUNT_ONCE_STORED_ENABLE
         pRingQ->maxCount = (pRingQ->count > pRingQ->maxCount) ?
                             pRingQ->count :
                             pRingQ->maxCount;
 #endif
-#if GET_PUT_PEEK_RETURN_COUNT_ENABLE
-        return pRingQ->count;
-#else
-        return;
-#endif
     }
 #if OVERFLOW_TIMES_COUNT_ENABLE
+    else {
         pRingQ->overflowTimes++;
-#endif
-#if OVERFLOW_LOST_BYTES_COUNT_ENABLE
-        pRingQ->LostBytesNum++;
+    }
 #endif
 #if GET_PUT_PEEK_RETURN_COUNT_ENABLE
-        return -1;
+        return pRingQ->count;
 #endif
 }
 
 /*******************************************************************************
- *  @brief  将多个字节存入环形队列缓存(溢出时不存储新接收的数据)
+ *  @brief  将多个字节存入环形队列缓存(溢出时循环覆盖之前的数据)
  *  @param  pRingQ - 环形队列缓存指针
  *          pSrc   - 存入的数据起始指针
  *          num    - 存入的字节数
- *  @return -1     - 溢出
- *          count  - 环形队列缓存当前存储字节数
+ *  @return count  - 环形队列缓存当前存储字节数
  *          -----------------------------------
  *          void
  */
@@ -252,30 +242,23 @@ extern int32_t ringQueue_PutMult(pRingQueue_t pRingQ, uint8_t *pSrc, int32_t num
 #else
 extern void ringQueue_PutMult(pRingQueue_t pRingQ, uint8_t *pSrc, int32_t num) {
 #endif
-    while(num){
+    while(num--){
+        pRingQ->tail = (pRingQ->tail + 1) % pRingQ->size;
+        pRingQ->pBuffer[pRingQ->tail] = *pSrc++;
+            
         if (pRingQ->count < pRingQ->size) {
-            pRingQ->tail = (pRingQ->tail + 1) % pRingQ->size;
-            pRingQ->pBuffer[pRingQ->tail] = *pSrc++;
             pRingQ->count++;
 #if MAX_COUNT_ONCE_STORED_ENABLE
             pRingQ->maxCount = (pRingQ->count > pRingQ->maxCount) ?
                                 pRingQ->count :
                                 pRingQ->maxCount;
 #endif
-        } else {
-#if OVERFLOW_TIMES_COUNT_ENABLE
-            pRingQ->overflowTimes++;
-#endif
-#if OVERFLOW_LOST_BYTES_COUNT_ENABLE
-            pRingQ->LostBytesNum += num;
-#endif
-#if GET_PUT_PEEK_RETURN_COUNT_ENABLE
-            return -1;
-#else
-            return;
-#endif
         }
-        num--;
+#if OVERFLOW_TIMES_COUNT_ENABLE
+        else {
+            pRingQ->overflowTimes++;
+        }
+#endif
     }
 #if GET_PUT_PEEK_RETURN_COUNT_ENABLE
     return pRingQ->count;
@@ -321,18 +304,6 @@ extern int32_t ringQueue_GetOverflowTimes(pRingQueue_t pRingQ) {
 }
 
 #endif /* OVERFLOW_TIMES_COUNT_ENABLE */
-
-#if OVERFLOW_LOST_BYTES_COUNT_ENABLE
-/*******************************************************************************
- *  @brief  读取溢出导致的丢失数据总字节数
- *  @param  pRingQ       - 环形队列缓存指针
- *  @return LostBytesNum - 溢出导致的丢失数据总字节数
- */
-extern int32_t ringQueue_GetLostBytesNum(pRingQueue_t pRingQ) {
-    return pRingQ->LostBytesNum;
-}
-
-#endif /* OVERFLOW_LOST_BYTES_COUNT_ENABLE */
 
 #if MAX_COUNT_ONCE_STORED_ENABLE
 /*******************************************************************************

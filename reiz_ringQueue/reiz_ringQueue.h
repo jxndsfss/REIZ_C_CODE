@@ -1,8 +1,8 @@
 ﻿/*******************************************************************************
  *  @file       reiz_ringQueue.h
  *  @author     jxndsfss
- *  @version    v1.0.3
- *  @date       2019-01-14
+ *  @version    v1.0.4
+ *  @date       2019-03-29
  *  @site       ShangYouSong.SZ
  *  @brief      环形队列缓存头文件
  *******************************************************************************
@@ -24,10 +24,9 @@ extern "C" {
 /* Exported define -----------------------------------------------------------*/
 
 /* 宏值：1为打开，0为关闭 */
-#define OVERFLOW_TIMES_COUNT_ENABLE         1                                   //溢出次数统计功能
-#define OVERFLOW_LOST_BYTES_COUNT_ENABLE    1                                   //溢出字节数统计功能
-#define MAX_COUNT_ONCE_STORED_ENABLE        1                                   //统计缓存之前存储过的最大字节数
-#define GET_PUT_PEEK_RETURN_COUNT_ENABLE    1                                   //存取函数是否返回缓存当前存储字节数
+#define OVERFLOW_TIMES_COUNT_ENABLE         1                                   //溢出覆盖次数统计功能
+#define MAX_COUNT_ONCE_STORED_ENABLE        0                                   //统计缓存之前存储过的最大字节数
+#define GET_PUT_PEEK_RETURN_COUNT_ENABLE    0                                   //存取函数是否返回缓存当前存储字节数
 
 /* Exported types ------------------------------------------------------------*/
 typedef struct ringQueueControlBlock_ {
@@ -41,9 +40,6 @@ typedef struct ringQueueControlBlock_ {
 #endif
 #if OVERFLOW_TIMES_COUNT_ENABLE
     int32_t     overflowTimes;                                                  //溢出次数
-#endif
-#if OVERFLOW_LOST_BYTES_COUNT_ENABLE
-    int32_t     LostBytesNum;                                                   //溢出后丢失的数据字节数量
 #endif
 } ringQueue_t, *pRingQueue_t;
 
@@ -87,10 +83,6 @@ extern void ringQueue_PeekP(pRingQueue_t pRingQ, uint8_t *pDst);                
 #if OVERFLOW_TIMES_COUNT_ENABLE 
 extern bool ringQueue_IsOverflow(pRingQueue_t pRingQ);                                          //查看环形队列缓存是否发生溢出
 extern int32_t ringQueue_GetOverflowTimes(pRingQueue_t pRingQ);                                 //读取环形队列缓存溢出次数
-#endif      
-
-#if OVERFLOW_LOST_BYTES_COUNT_ENABLE    
-extern int32_t ringQueue_GetLostBytesNum(pRingQueue_t pRingQ);                                  //读取溢出导致的丢失数据总字节数
 #endif      
 
 #if MAX_COUNT_ENABLE    
