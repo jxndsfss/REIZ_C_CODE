@@ -1,8 +1,8 @@
 /*******************************************************************************
  *  @file       reiz_ringQueue.c
  *  @author     jxndsfss
- *  @version    v1.0.4
- *  @date       2019-03-29
+ *  @version    v1.0.5
+ *  @date       2019-04-04
  *  @site       ShangYouSong.SZ
  *  @brief      环形队列缓存源文件
  *******************************************************************************
@@ -20,13 +20,13 @@
 
 /*******************************************************************************
  *  @brief  环形队列缓存并进行初始化
- *  @param  pRingQ      - 环形队列控制块指针
- *          bufferArray - 存储数据的数组指针
- *          arraySize   - 存储数据的数组大小
- *  @return true        - 成功
- *          false       - 失败
+ *  @param  pRingQ       - 环形队列控制块指针
+ *          pBufferArray - 存储数据的数组指针
+ *          arraySize    - 存储数据的数组大小
+ *  @return true         - 成功
+ *          false        - 失败
  */
-extern bool ringQueue_Init(pRingQueue_t pRingQ, uint8_t *pBufferArray, int32_t arraySize) {
+bool ringQueue_Init(pRingQueue_t pRingQ, uint8_t *pBufferArray, int32_t arraySize) {
     if (pRingQ == NULL || pBufferArray == NULL || arraySize == 0) {
         return false;
     }
@@ -56,9 +56,9 @@ extern bool ringQueue_Init(pRingQueue_t pRingQ, uint8_t *pBufferArray, int32_t a
  *          void
  */
 #if GET_PUT_PEEK_RETURN_COUNT_ENABLE
-extern int32_t ringQueue_GetByteP(pRingQueue_t pRingQ, uint8_t *pDst) {
+int32_t ringQueue_GetByteP(pRingQueue_t pRingQ, uint8_t *pDst) {
 #else
-extern void ringQueue_GetByteP(pRingQueue_t pRingQ, uint8_t *pDst) {
+void ringQueue_GetByteP(pRingQueue_t pRingQ, uint8_t *pDst) {
 #endif
     if (pRingQ->count > 0) {
         pRingQ->head = (pRingQ->head + 1) % pRingQ->size;
@@ -88,9 +88,9 @@ extern void ringQueue_GetByteP(pRingQueue_t pRingQ, uint8_t *pDst) {
  *          void
  */
 #if GET_PUT_PEEK_RETURN_COUNT_ENABLE
-extern int32_t ringQueue_GetMult(pRingQueue_t pRingQ, uint8_t *pDst, int32_t num) {
+int32_t ringQueue_GetMult(pRingQueue_t pRingQ, uint8_t *pDst, int32_t num) {
 #else
-extern void ringQueue_GetMult(pRingQueue_t pRingQ, uint8_t *pDst, int32_t num) {
+void ringQueue_GetMult(pRingQueue_t pRingQ, uint8_t *pDst, int32_t num) {
 #endif
     if(num <= pRingQ->count){
         while(num--){
@@ -112,12 +112,68 @@ extern void ringQueue_GetMult(pRingQueue_t pRingQ, uint8_t *pDst, int32_t num) {
 }
 
 /*******************************************************************************
+ *  @brief  通过尾位置读取缓存内容，即读出缓存内该位置前所有内容
+ *  @param  pRingQ - 环形队列缓存指针
+ *  @return -1     - 读取失败
+ *          count  - 读取后环形队列缓存的当前存储字节数
+ *          -------------------------------------------
+ *          void
+ */
+#if GET_PUT_PEEK_RETURN_COUNT_ENABLE
+int32_t ringQueue_GetDataViaLocation(pRingQueue_t pRingQ, uint8_t *pDst, uint32_t loc) {
+#else
+void ringQueue_GetDataViaLocation(pRingQueue_t pRingQ, uint8_t *pDst, uint32_t loc) {
+#endif
+    if(pRingQ->count > 0){
+        while(pRingQ->head != loc){
+            pRingQ->head = (pRingQ->head + 1) % pRingQ->size;
+            *pDst++ = pRingQ->pBuffer[pRingQ->head];
+            pRingQ->count--;
+        }
+        
+#if GET_PUT_PEEK_RETURN_COUNT_ENABLE
+        return pRingQ->count;
+#else
+        return;
+#endif
+    }
+    
+#if GET_PUT_PEEK_RETURN_COUNT_ENABLE
+        return -1;
+#endif
+}
+
+/*******************************************************************************
+ *  @brief  当环形队列存满且溢出时，指定location作为环形队列缓存最后接收位置，获取该位置前的所有数据.
+ *          这种情况的溢出，是考虑到缓存若接收到一些无效数据字节导致缓存存满而溢出的情况！
+ *  @param  pRingQ   - 环形队列缓存指针
+ *  @return pDst     - 环形队列缓存当前存储字节数
+ *          location - 指定作为缓存最终接收位置
+ */
+void ringQueue_GetAllDataViaLocationOverflow(pRingQueue_t pRingQ, uint8_t *pDst, uint32_t location) {
+    if (ringQueue_IsFull(pRingQ) && ringQueue_IsOverflow(pRingQ)) {
+        pRingQ->head = pRingQ->tail = location;
+        ringQueue_GetMult(pRingQ, pDst, pRingQ->size);
+        ringQueue_Flush(pRingQ);
+    }
+}
+
+/*******************************************************************************
  *  @brief  获取环形队列缓存当前存储字节数
  *  @param  pRingQ - 环形队列缓存指针
  *  @return count  - 环形队列缓存当前存储字节数
  */
-extern uint32_t ringQueue_GetCount(pRingQueue_t pRingQ) {
+uint32_t ringQueue_GetCount(pRingQueue_t pRingQ) {
     return pRingQ->count;
+}
+
+/*******************************************************************************
+ *  @brief  获取环形队列尾位置，即最后存储字节在缓存中的存储位置
+ *  @param  pRingQ   - 环形队列缓存指针
+ *  @return uint32_t - 环形队列缓存尾位置，即最后存储字节在缓存中的位置
+ */
+uint32_t ringQueue_GetTailLocation(pRingQueue_t pRingQ) {
+    return pRingQ->tail;
 }
 
 /*******************************************************************************
@@ -126,7 +182,7 @@ extern uint32_t ringQueue_GetCount(pRingQueue_t pRingQ) {
  *  @return true   - 已满
  *          false  - 未满
  */
-extern bool ringQueue_IsFull(pRingQueue_t pRingQ) {
+bool ringQueue_IsFull(pRingQueue_t pRingQ) {
     return pRingQ->count == pRingQ->size;
 }
 
@@ -136,7 +192,7 @@ extern bool ringQueue_IsFull(pRingQueue_t pRingQ) {
  *  @return true   - 为空
  *          false  - 不为空
  */
-extern bool ringQueue_IsEmpty(pRingQueue_t pRingQ) {
+bool ringQueue_IsEmpty(pRingQueue_t pRingQ) {
     return pRingQ->count == 0;
 }
 
@@ -146,7 +202,7 @@ extern bool ringQueue_IsEmpty(pRingQueue_t pRingQ) {
  *  @return retData - 读取的字节
  *          0       - 环状队列缓存为空时返回0
  */
-extern uint8_t ringQueue_GetByte(pRingQueue_t pRingQ) {
+uint8_t ringQueue_GetByte(pRingQueue_t pRingQ) {
     uint8_t retData = 0;
     
     if (pRingQ->count > 0) {
@@ -163,7 +219,7 @@ extern uint8_t ringQueue_GetByte(pRingQueue_t pRingQ) {
  *  @return retData - 查看的字节
  *          0       - 环状队列缓存为空时返回0
  */
-extern uint8_t ringQueue_Peek(pRingQueue_t pRingQ) {
+uint8_t ringQueue_Peek(pRingQueue_t pRingQ) {
     return pRingQ->count > 0 ? pRingQ->pBuffer[pRingQ->tail] : 0;
 }
 
@@ -177,9 +233,9 @@ extern uint8_t ringQueue_Peek(pRingQueue_t pRingQ) {
  *          void
  */
 #if GET_PUT_PEEK_RETURN_COUNT_ENABLE
-extern int32_t ringQueue_PeekP(pRingQueue_t pRingQ, uint8_t *pDst) {
+int32_t ringQueue_PeekP(pRingQueue_t pRingQ, uint8_t *pDst) {
 #else
-extern void ringQueue_PeekP(pRingQueue_t pRingQ, uint8_t *pDst) {
+void ringQueue_PeekP(pRingQueue_t pRingQ, uint8_t *pDst) {
 #endif
     if (pRingQ->count > 0) {
         *pDst = pRingQ->pBuffer[pRingQ->tail];
@@ -203,9 +259,9 @@ extern void ringQueue_PeekP(pRingQueue_t pRingQ, uint8_t *pDst) {
  *          void
  */
 #if GET_PUT_PEEK_RETURN_COUNT_ENABLE
-extern int32_t ringQueue_PutByte(pRingQueue_t pRingQ, uint8_t data) {
+int32_t ringQueue_PutByte(pRingQueue_t pRingQ, uint8_t data) {
 #else
-extern void ringQueue_PutByte(pRingQueue_t pRingQ, uint8_t data) {
+void ringQueue_PutByte(pRingQueue_t pRingQ, uint8_t data) {
 #endif
     pRingQ->tail = (pRingQ->tail + 1) % pRingQ->size;
     pRingQ->pBuffer[pRingQ->tail] = data;
@@ -224,7 +280,7 @@ extern void ringQueue_PutByte(pRingQueue_t pRingQ, uint8_t data) {
     }
 #endif
 #if GET_PUT_PEEK_RETURN_COUNT_ENABLE
-        return pRingQ->count;
+    return pRingQ->count;
 #endif
 }
 
@@ -238,9 +294,9 @@ extern void ringQueue_PutByte(pRingQueue_t pRingQ, uint8_t data) {
  *          void
  */
 #if GET_PUT_PEEK_RETURN_COUNT_ENABLE
-extern int32_t ringQueue_PutMult(pRingQueue_t pRingQ, uint8_t *pSrc, int32_t num) {
+int32_t ringQueue_PutMult(pRingQueue_t pRingQ, uint8_t *pSrc, int32_t num) {
 #else
-extern void ringQueue_PutMult(pRingQueue_t pRingQ, uint8_t *pSrc, int32_t num) {
+void ringQueue_PutMult(pRingQueue_t pRingQ, uint8_t *pSrc, int32_t num) {
 #endif
     while(num--){
         pRingQ->tail = (pRingQ->tail + 1) % pRingQ->size;
@@ -266,12 +322,12 @@ extern void ringQueue_PutMult(pRingQueue_t pRingQ, uint8_t *pSrc, int32_t num) {
 }
 
 /*******************************************************************************
- *  @brief  清空环形队列缓存
+ *  @brief  清空环形队列缓存，计数清零，溢出计数清零
  *  @param  pRingQ - 环形队列缓存指针
  *  @return void
  */
-extern void ringQueue_Flush(pRingQueue_t pRingQ) {
-    pRingQ->head = pRingQ->tail = pRingQ->count = 0;
+void ringQueue_Flush(pRingQueue_t pRingQ) {
+    pRingQ->head = pRingQ->tail = pRingQ->count = pRingQ->overflowTimes = 0;
 }
 
 /*******************************************************************************
@@ -279,7 +335,7 @@ extern void ringQueue_Flush(pRingQueue_t pRingQ) {
  *  @param  pRingQ - 环形队列缓存指针
  *  @return int    - 空余字节数
  */
-extern uint32_t ringQueue_GetFree(pRingQueue_t pRingQ) {
+uint32_t ringQueue_GetFree(pRingQueue_t pRingQ) {
     return pRingQ->size - pRingQ->count;
 }
 
@@ -290,7 +346,7 @@ extern uint32_t ringQueue_GetFree(pRingQueue_t pRingQ) {
  *  @return true   - 溢出
  *          false  - 未溢出
  */
-extern bool ringQueue_IsOverflow(pRingQueue_t pRingQ) {
+bool ringQueue_IsOverflow(pRingQueue_t pRingQ) {
     return pRingQ->overflowTimes > 0 ? true : false;
 }
 
@@ -299,7 +355,7 @@ extern bool ringQueue_IsOverflow(pRingQueue_t pRingQ) {
  *  @param  pRingQ        - 环形队列缓存指针
  *  @return overflowTimes - 溢出次数
  */
-extern int32_t ringQueue_GetOverflowTimes(pRingQueue_t pRingQ) {
+int32_t ringQueue_GetOverflowTimes(pRingQueue_t pRingQ) {
     return pRingQ->overflowTimes;
 }
 
@@ -311,7 +367,7 @@ extern int32_t ringQueue_GetOverflowTimes(pRingQueue_t pRingQ) {
  *  @param  pRingQ   - 环形队列缓存指针
  *  @return maxCount - 环形队列缓存存储过的最大字节数
  */
-extern int32_t ringQueue_GetMaxCount(pRingQueue_t pRingQ) {
+int32_t ringQueue_GetMaxCount(pRingQueue_t pRingQ) {
     return pRingQ->maxCount;
 }
 
