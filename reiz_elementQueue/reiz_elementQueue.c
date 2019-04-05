@@ -1,10 +1,10 @@
 /********************************************************************************************************
  *  @file       reiz_elementQueue.c
  *  @author     chenLei
- *  @version    v1.0.0
- *  @date       2019-03-30
+ *  @version    v1.0.1
+ *  @date       2019-04-04
  *  @site       xinMeiYuan.A41
- *  @brief      FIFO先进先出元素存储环形队列源文件
+ *  @brief      元素存储队列源文件
  ********************************************************************************************************
  */
 
@@ -20,11 +20,11 @@
 
 /********************************************************************************************************
  *  @brief  创建元素存储环形队列并进行初始化
- *  @param  pRingQ       - 环形队列控制块指针
- *          pBufferArray - 存储数据的数组指针
- *          arraySize    - 存储数据的数组大小
- *  @return true         - 成功
- *          false        - 失败
+ *  @param  pRingQ      - 环形队列控制块指针
+ *          bufferArray - 存储数据的数组指针
+ *          arraySize   - 存储数据的数组大小
+ *  @return true        - 成功
+ *          false       - 失败
  */
 bool eleQueue_Init ( pEleQueue_t pRingQ, ELEMENT_TYPE *pBufferArray, uint32_t arraySize ) {
     if (pRingQ == NULL || pBufferArray == NULL || arraySize == 0) {
@@ -81,13 +81,14 @@ bool eleQueue_IsEmpty ( pEleQueue_t pRingQ ) {
  *  @return 0    - 无数据
  *          其他 - 元素内容
  */
-ELEMENT_TYPE eleQueue_GetElement ( pEleQueue_t pRingQ ) {
+bool eleQueue_GetElement ( pEleQueue_t pRingQ, ELEMENT_TYPE *pDst ) {
     if (pRingQ->count > 0) {
         pRingQ->head = (pRingQ->head + 1) % pRingQ->size;
+        *pDst =  pRingQ->pBuffer[pRingQ->head];
         pRingQ->count--;
-        return pRingQ->pBuffer[pRingQ->head];
+        return true;
     } else {
-        return 0;
+        return false;
     }
 }
 
@@ -97,8 +98,13 @@ ELEMENT_TYPE eleQueue_GetElement ( pEleQueue_t pRingQ ) {
  *  @return 0    - 无数据
  *          其他 - 元素内容
  */
-ELEMENT_TYPE eleQueue_Peek ( pEleQueue_t pRingQ ) {
-    return pRingQ->count > 0 ? pRingQ->pBuffer[pRingQ->tail] : 0;
+bool eleQueue_Peek ( pEleQueue_t pRingQ, ELEMENT_TYPE *pDst ) {
+    if (pRingQ->count > 0) {
+        *pDst = pRingQ->pBuffer[pRingQ->tail];
+        return true;
+    } else {
+        return false;
+    }
 }
 
 /********************************************************************************************************
@@ -117,6 +123,32 @@ uint32_t eleQueue_GetFree ( pEleQueue_t pRingQ ) {
  */
 uint32_t eleQueue_GetCount ( pEleQueue_t pRingQ ) {
     return pRingQ->count;
+}
+
+/********************************************************************************************************
+ *  @brief  查看环形队列存尾端元素内容，但不取出该元素
+ *  @param  pRingQ - 元素存储环形队列控制块指针
+ *  @return count  - 环形队列当前存储元素个数
+ *          -1     - 查看失败，队列为空
+ *          -----------------------------------
+ *          void
+ */
+#if ELE_GET_PUT_RETURN_COUNT_ENABLE
+int32_t eleQueue_PeekP ( pEleQueue_t pRingQ, ELEMENT_TYPE *pDst ) {
+#else
+void eleQueue_PeekP ( pEleQueue_t pRingQ, ELEMENT_TYPE *pDst ) {
+#endif
+    if (pRingQ->count > 0) {
+        *pDst = pRingQ->pBuffer[pRingQ->tail];
+#if ELE_GET_PUT_RETURN_COUNT_ENABLE
+        return pRingQ->count;
+#else
+        return;
+#endif
+    }
+#if ELE_GET_PUT_RETURN_COUNT_ENABLE
+        return -1;
+#endif
 }
 
 /********************************************************************************************************
@@ -146,32 +178,6 @@ void eleQueue_GetElementP ( pEleQueue_t pRingQ, ELEMENT_TYPE *pDst ) {
     
 #if ELE_GET_PUT_RETURN_COUNT_ENABLE
     return -1;
-#endif
-}
-
-/********************************************************************************************************
- *  @brief  查看环形队列存尾端元素内容，但不取出该元素
- *  @param  pRingQ - 元素存储环形队列控制块指针
- *  @return count  - 环形队列当前存储元素个数
- *          -1     - 查看失败，队列为空
- *          -----------------------------------
- *          void
- */
-#if ELE_GET_PUT_RETURN_COUNT_ENABLE
-int32_t eleQueue_PeekP ( pEleQueue_t pRingQ, ELEMENT_TYPE *pDst ) {
-#else
-void eleQueue_PeekP ( pEleQueue_t pRingQ, ELEMENT_TYPE *pDst ) {
-#endif
-    if (pRingQ->count > 0) {
-        *pDst = pRingQ->pBuffer[pRingQ->tail];
-#if ELE_GET_PUT_RETURN_COUNT_ENABLE
-        return pRingQ->count;
-#else
-        return;
-#endif
-    }
-#if ELE_GET_PUT_RETURN_COUNT_ENABLE
-        return -1;
 #endif
 }
 
