@@ -7,7 +7,7 @@
  *  @brief      字符串协议解析模块使用例程
  *******************************************************************************
  *  使用方法：
- *  1.根据MCU位数修改 reiz_protocolParse.h 中的宏 FLAG_MATRIX_ROW_TYPE，使其为unsigned int类型
+ *  1.根据MCU位数修改 reiz_strCmdParse.h 中的宏 FLAG_MATRIX_ROW_TYPE，使其为unsigned int类型
  *      例：#define FLAG_MATRIX_ROW_TYPE          uint32_t
  *  2.根据命令类型数量 n 修改宏值 MATRIX_ROW，使 MATRIX_ROW * MATRIX_COL >= n
  *      例：#define MATRIX_ROW                    1
