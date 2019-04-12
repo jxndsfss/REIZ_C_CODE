@@ -1,14 +1,14 @@
-/*******************************************************************************
+/********************************************************************************************************
  *  @file       reiz_ringQueue.h
  *  @author     jxndsfss
  *  @version    v1.0.5
  *  @date       2019-04-04
  *  @site       ShangYouSong.SZ
  *  @brief      环形队列缓存头文件
- *******************************************************************************
+ ********************************************************************************************************
  */
 
-/* Define to prevent recursive inclusion -------------------------------------*/
+/* Define to prevent recursive inclusion ------------------------------------------------------------- */
 #ifndef REIZ_RING_QUEUE_H
 #define REIZ_RING_QUEUE_H
 
@@ -16,19 +16,19 @@
 extern "C" {
 #endif
 
-/* Includes ------------------------------------------------------------------*/
+/* Includes ------------------------------------------------------------------------------------------ */
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
 
-/* Exported define -----------------------------------------------------------*/
+/* Exported define ----------------------------------------------------------------------------------- */
 
 /* 宏值：1为打开，0为关闭 */
 #define OVERFLOW_TIMES_COUNT_ENABLE         1                                   //溢出覆盖次数统计功能
 #define MAX_COUNT_ONCE_STORED_ENABLE        0                                   //统计缓存之前存储过的最大字节数
 #define GET_PUT_PEEK_RETURN_COUNT_ENABLE    0                                   //存取函数是否返回缓存当前存储字节数
 
-/* Exported types ------------------------------------------------------------*/
+/* Exported types ------------------------------------------------------------------------------------ */
 typedef struct ringQueueControlBlock_ {
     uint8_t     *pBuffer;                                                       //实际数据存储数组地址
     int32_t     size;                                                           //实际数据存储数组长度
@@ -43,7 +43,7 @@ typedef struct ringQueueControlBlock_ {
 #endif
 } ringQueue_t, *pRingQueue_t;
 
-/* Exported macro ------------------------------------------------------------*/
+/* Exported macro ------------------------------------------------------------------------------------ */
 
 /*
     环形队列缓存对象宏类型定义
@@ -53,16 +53,16 @@ typedef struct ringQueueControlBlock_ {
                                             uint8_t buffer[bufferSize];         \
                                         }
 
-/* Exported variables --------------------------------------------------------*/
+/* Exported variables -------------------------------------------------------------------------------- */
 
-/* Exported functions prototypes ---------------------------------------------*/
+/* Exported functions prototypes --------------------------------------------------------------------- */
 
 extern bool ringQueue_Init(pRingQueue_t pRingQ, uint8_t *pBufferArray, int32_t arraySize);          //创建环形队列缓存并进行初始化
 extern void ringQueue_Flush(pRingQueue_t pRingQ);                                                   //清空环形队列缓存
 extern bool ringQueue_IsFull(pRingQueue_t pRingQ);                                                  //查看环形队列缓存是否已满
 extern bool ringQueue_IsEmpty(pRingQueue_t pRingQ);                                                 //查看环形队列缓存是否为空
-extern uint8_t  ringQueue_GetByte(pRingQueue_t pRingQ);                                              //从环状队列缓存读取1个字节
-extern uint8_t  ringQueue_Peek(pRingQueue_t pRingQ);                                                 //查看环形队列缓存尾端1字节内容，但不取出该字节
+extern uint8_t  ringQueue_GetByte(pRingQueue_t pRingQ);                                             //从环状队列缓存读取1个字节
+extern uint8_t  ringQueue_Peek(pRingQueue_t pRingQ);                                                //查看环形队列缓存尾端1字节内容，但不取出该字节
 extern uint32_t ringQueue_GetFree(pRingQueue_t pRingQ);                                             //获取环形队列缓存空余容量字节数
 extern uint32_t ringQueue_GetCount(pRingQueue_t pRingQ);                                            //获取环形队列缓存当前存储字节数
 extern uint32_t ringQueue_GetTailLocation(pRingQueue_t pRingQ);                                     //获取环形队列尾位置，即最后存储字节在缓存中的存储位置
@@ -101,5 +101,5 @@ extern int32_t ringQueue_GetMaxCount(pRingQueue_t pRingQ);                      
 
 #endif /* REIZ_RING_QUEUE_H */
 
-/******************************** END OF FILE **********************************
-*************************** (C) Copyright 2019 REIZ ***************************/
+/******************************************* END OF FILE ************************************************
+************************************** (C) Copyright 2019 REIZ *****************************************/
